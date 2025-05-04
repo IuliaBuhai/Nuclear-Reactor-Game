@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simulator Reactor Nuclear</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at center, #0f0f0f, #1c1c1c);
+      color: #00ffcc;
+      overflow: hidden;
+      transition: all 1s ease;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0; left: 0;
+      z-index: -1;
+    }
+
+    h1 {
+      font-size: 2.8em;
+      color: #00ffe5;
+      text-shadow: 0 0 8px #00ffee;
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    #modal {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.92);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      text-align: center;
+      padding: 30px;
+      backdrop-filter: blur(5px);
+    }
+
+    #modal h2 {
+      color: #00ffe5;
+      margin-bottom: 20px;
+      font-size: 2.2em;
+    }
+
+    #modal p {
+      max-width: 600px;
+      margin: 15px 0;
+      font-size: 1.1em;
+      line-height: 1.6;
+    }
+
+    #modal button {
+      background-color: #007b55;
+      padding: 12px 28px;
+      font-size: 18px;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px #00ffaa80;
+    }
+
+    #modal button:hover {
+      background-color: #00aa77;
+      transform: scale(1.05);
+    }
+
+    .dashboard {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+      margin: 30px auto;
+    }
+
+    .panel {
+      background: rgba(34, 34, 34, 0.9);
+      padding: 20px 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px #00ffcc55;
+      min-width: 220px;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(0, 255, 200, 0.2);
+    }
+
+    .panel:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 30px #00ffccaa;
+    }
+
+    .panel h3 {
+      margin-bottom: 10px;
+      font-size: 1.1em;
+      color: #fff;
+      text-align: center;
+    }
+
+    .panel p {
+      font-size: 1.4em;
+      text-align: center;
+      margin: 0;
+      font-weight: bold;
+    }
+
+    #powerBar {
+      width: 80%;
+      max-width: 500px;
+      height: 30px;
+      background: #222;
+      margin: 20px auto;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 0 10px #00ffe0;
+      animation: pulse 2s infinite;
+      position: relative;
+      border: 1px solid rgba(0, 255, 200, 0.3);
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 10px #00ffe0; }
+      50% { box-shadow: 0 0 20px #00ffe0; }
+    }
+
+    #powerLevel {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #0000ff, #00ff00, #ffa500, #ff0000);
+      transition: width 0.3s, filter 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #powerLevel::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, 
+        rgba(255,255,255,0.1) 0%, 
+        rgba(255,255,255,0.3) 50%, 
+        rgba(255,255,255,0.1) 100%);
+      background-size: 200% 100%;
+      animation: shine 2s infinite;
+    }
+
+    @keyframes shine {
+      0% { background-position: -100% 0; }
+      100% { background-position: 100% 0; }
+    }
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      margin: 10px;
+      padding: 12px 25px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: bold;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .danger {
+      background: linear-gradient(to bottom, #ff4444, #cc0000);
+      color: white;
+    }
+
+    .safe {
+      background: linear-gradient(to bottom, #22cc55, #009933);
+      color: white;
+    }
+
+    button:hover {
+      transform: scale(1.05) translateY(-2px);
+      filter: brightness(1.1);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+    }
+
+    button:active {
+      transform: scale(0.98) translateY(0);
+    }
+
+    #status {
+      font-weight: bold;
+      font-size: 1.3em;
+      margin-top: 20px;
+      text-align: center;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.3);
+      display: inline-block;
+      margin-left: 50%;
+      transform: translateX(-50%);
+      min-width: 250px;
+      transition: all 0.3s;
+    }
+
+    #timer {
+      font-size: 1.5em;
+      margin-top: 10px;
+      text-align: center;
+      font-weight: bold;
+      color: #00ffaa;
+    }
+
+    #score {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.7);
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-weight: bold;
+      border: 1px solid #00ffaa;
+    }
+
+    #reactorCore {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,255,200,0.1) 0%, rgba(0,255,200,0) 70%);
+      box-shadow: 0 0 50px rgba(0, 255, 200, 0.3);
+      transition: all 1s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2em;
+      opacity: 0.8;
+    }
+
+    .event-notification {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: #ffcc00;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      box-shadow: 0 0 20px #ffcc00;
+      z-index: 100;
+      opacity: 0;
+      transition: all 0.5s;
+    }
+
+    .meltdown-effect {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(255,100,0,0.8) 0%, rgba(255,0,0,0.9) 70%);
+      z-index: 99;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 2s;
+    }
+
+    .shake {
+      animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    }
+
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+
+    .glow {
+      animation: glow 1s infinite alternate;
+    }
+
+    @keyframes glow {
+      from { box-shadow: 0 0 10px -5px #00ffaa; }
+      to { box-shadow: 0 0 20px 5px #00ffaa; }
+    }
+
+    .particle-explosion {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 98;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="neutronCanvas"></canvas>
+  <div id="reactorCore">⚛️</div>
+  <div id="score">Scor: 0</div>
+  <div class="event-notification" id="eventNotification"></div>
+  <div class="meltdown-effect" id="meltdownEffect"></div>
+  <div class="particle-explosion" id="particleExplosion"></div>
+
+  <div id="modal">
+    <h2>⚛️ Bine ai venit în Simulatorul Reactorului Nuclear</h2>
+    <p>Scopul tău este să menții reactorul <strong>stabil</strong> timp de <strong>60 de secunde</strong>.</p>
+    <p>Folosește butoanele pentru a <strong>retrage</strong> sau <strong>introduce</strong> barele de control și menține temperatura și puterea sub control.</p>
+    <p>Dacă puterea scade sub 5% sau crește peste 95%, vei provoca o <strong>topire nucleară</strong>! 🔥☢️</p>
+    <p>Fii atent la fluctuațiile aleatorii și la evenimente neașteptate.</p>
+    <p><strong>Nivel de dificultate:</strong></p>
+    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px;">
+      <button onclick="startGame('easy')" class="safe">Ușor</button>
+      <button onclick="startGame('medium')" style="background: linear-gradient(to bottom, #ffcc00, #ff9900);">Mediu</button>
+      <button onclick="startGame('hard')" class="danger">Greu</button>
+    </div>
+  </div>
+
+  <h1>⚛️ Simulator Reactor Nuclear</h1>
+
+  <div id="powerBar"><div id="powerLevel"></div></div>
+
+  <div class="dashboard">
+    <div class="panel">
+      <h3>Putere Generată</h3>
+      <p><span id="powerDisplay">0</span>%</p>
+    </div>
+    <div class="panel">
+      <h3>Inserție Bare</h3>
+      <p><span id="rodDisplay">0</span>%</p>
+    </div>
+    <div class="panel">
+      <h3>Temperatură</h3>
+      <p><span id="tempDisplay">0</span> °C</p>
+    </div>
+    <div class="panel">
+      <h3>Presiune</h3>
+      <p><span id="pressureDisplay">0</span> MPa</p>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="adjustRods(-5)" class="safe">⬆️ Retrage Bare</button>
+    <button onclick="adjustRods(5)" class="safe">⬇️ Introdu Bare</button>
+    <button onclick="emergencyShutdown()" class="danger">🛑 Oprire de Urgență</button>
+    <button onclick="coolReactor()" style="background: linear-gradient(to bottom, #0099ff, #0066cc);">❄️ Răcire Rapidă</button>
+  </div>
+
+  <p id="status">Status: Stabil</p>
+  <p id="timer">Timp rămas: 60s</p>
+
+  <audio id="alertSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+  <audio id="meltdownSound" src="https://www.soundjay.com/explosion/explosion-01.mp3"></audio>
+  <audio id="coolingSound" src="https://www.soundjay.com/mechanical/sounds/steam-01.mp3"></audio>
+  <audio id="backgroundSound" loop src="https://www.soundjay.com/mechanical/sounds/nuclear-reactor-01.mp3"></audio>
+  <audio id="successSound" src="https://www.soundjay.com/human/sounds/applause-01.mp3"></audio>
+
+  <script>
+    const canvas = document.getElementById("neutronCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let power = 50;
+    let rods = 50;
+    let temperature = 50;
+    let pressure = 50;
+    let particles = [];
+    let gameInterval, timerInterval, eventInterval;
+    let timeLeft = 60;
+    let score = 0;
+    let difficulty = 'medium';
+    let gameActive = false;
+    let eventActive = false;
+
+    const powerDisplay = document.getElementById("powerDisplay");
+    const rodDisplay = document.getElementById("rodDisplay");
+    const tempDisplay = document.getElementById("tempDisplay");
+    const pressureDisplay = document.getElementById("pressureDisplay");
+    const alertSound = document.getElementById("alertSound");
+    const meltdownSound = document.getElementById("meltdownSound");
+    const coolingSound = document.getElementById("coolingSound");
+    const backgroundSound = document.getElementById("backgroundSound");
+    const successSound = document.getElementById("successSound");
+    const eventNotification = document.getElementById("eventNotification");
+    const meltdownEffect = document.getElementById("meltdownEffect");
+    const scoreDisplay = document.getElementById("score");
+    const reactorCore = document.getElementById("reactorCore");
+
+    // Initialize particles
+    for (let i = 0; i < 200; i++) {
+      particles.push(new Particle());
+    }
+
+    function calculateTemperature(power) {
+      return 50 + power * 8 + Math.random() * 20 - 10;
+    }
+
+    function calculatePressure(power, temp) {
+      return power * 0.8 + temp * 0.1 + Math.random() * 10 - 5;
+    }
+
+    function adjustRods(change) {
+      if (!gameActive) return;
+      
+      rods = Math.max(0, Math.min(100, rods + change));
+      power += (50 - rods) * (0.1 * getDifficultyFactor());
+      power = Math.max(0, Math.min(100, power));
+      updateDisplay();
+      
+      // Add visual feedback
+      if (change > 0) {
+        reactorCore.style.boxShadow = '0 0 60px rgba(0, 200, 255, 0.8)';
+        setTimeout(() => {
+          reactorCore.style.boxShadow = '0 0 50px rgba(0, 255, 200, 0.3)';
+        }, 300);
+      } else {
+        reactorCore.style.boxShadow = '0 0 60px rgba(255, 200, 0, 0.8)';
+        setTimeout(() => {
+          reactorCore.style.boxShadow = '0 0 50px rgba(0, 255, 200, 0.3)';
+        }, 300);
+      }
+    }
+
+    function coolReactor() {
+      if (!gameActive) return;
+      
+      coolingSound.currentTime = 0;
+      coolingSound.play();
+      
+      // Immediate cooling effect
+      power = Math.max(0, power - 15);
+      temperature = Math.max(0, temperature - 50);
+      
+      // Visual feedback
+      reactorCore.style.boxShadow = '0 0 80px rgba(0, 150, 255, 0.9)';
+      setTimeout(() => {
+        reactorCore.style.boxShadow = '0 0 50px rgba(0, 255, 200, 0.3)';
+      }, 1000);
+      
+      // Cooldown period where cooling is less effective
+      setTimeout(() => {
+        if (gameActive) {
+          showEvent("Sistemul de răcire este suprasolicitat!");
+        }
+      }, 5000);
+      
+      updateDisplay();
+    }
+
+    function emergencyShutdown() {
+      if (!gameActive) return;
+      
+      rods = 100;
+      power = 0;
+      temperature = 50;
+      pressure = 50;
+      
+      // Visual feedback
+      document.body.classList.add('shake');
+      reactorCore.style.boxShadow = '0 0 100px rgba(255, 0, 0, 0.9)';
+      setTimeout(() => {
+        document.body.classList.remove('shake');
+        reactorCore.style.boxShadow = '0 0 50px rgba(0, 255, 200, 0.3)';
+      }, 1000);
+      
+      updateDisplay();
+    }
+
+    function getDifficultyFactor() {
+      switch(difficulty) {
+        case 'easy': return 0.7;
+        case 'hard': return 1.5;
+        default: return 1;
+      }
+    }
+
+    function startGame(selectedDifficulty) {
+      difficulty = selectedDifficulty || 'medium';
+      gameActive = true;
+      document.getElementById("modal").style.display = "none";
+      timeLeft = 60;
+      score = 0;
+      power = 50;
+      rods = 50;
+      
+      document.getElementById("timer").textContent = `Timp rămas: ${timeLeft}s`;
+      scoreDisplay.textContent = `Scor: ${score}`;
+      
+      // Start background sound
+      backgroundSound.volume = 0.3;
+      backgroundSound.play();
+      
+      // Game loop
+      gameInterval = setInterval(() => {
+        const fluctuation = (Math.random() - 0.5) * 3 * getDifficultyFactor();
+        power += (50 - rods) * (0.05 * getDifficultyFactor()) + fluctuation;
+        power = Math.max(0, Math.min(100, power));
+        
+        // Random events
+        if (!eventActive && Math.random() < 0.01 * getDifficultyFactor()) {
+          triggerRandomEvent();
+        }
+        
+        updateDisplay();
+      }, 200);
+
+      // Timer
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").textContent = `Timp rămas: ${timeLeft}s`;
+        
+        // Score increases while in safe zone
+        if (power > 20 && power < 80) {
+          score += 10 * getDifficultyFactor();
+          scoreDisplay.textContent = `Scor: ${Math.round(score)}`;
+        }
+        
+        if (timeLeft <= 0) {
+          endGame(true);
+        }
+      }, 1000);
+
+      // Random events check
+      eventInterval = setInterval(() => {
+        if (!eventActive && Math.random() < 0.005 * getDifficultyFactor()) {
+          triggerRandomEvent();
+        }
+      }, 5000);
+    }
+
+    function triggerRandomEvent() {
+      if (!gameActive) return;
+      
+      eventActive = true;
+      const events = [
+        { 
+          name: "Creștere bruscă a reactivității!", 
+          effect: () => { power += 30; showEvent("Creștere bruscă a reactivității!"); }
+        },
+        { 
+          name: "Defect la sistemul de răcire!", 
+          effect: () => { temperature += 100; showEvent("Defect la sistemul de răcire!"); }
+        },
+        { 
+          name: "Scădere a presiunii!", 
+          effect: () => { pressure -= 30; showEvent("Scădere a presiunii!"); }
+        },
+        { 
+          name: "Fluctuație aleatorie!", 
+          effect: () => { 
+            power += Math.random() > 0.5 ? 20 : -20; 
+            showEvent("Fluctuație aleatorie!"); 
+          }
+        },
+        { 
+          name: "Bare blocată!", 
+          effect: () => { 
+            showEvent("Bare blocată! Nu poți ajusta barele timp de 5 secunde!");
+            setTimeout(() => {
+              if (gameActive) showEvent("Barele funcționează din nou!");
+              eventActive = false;
+            }, 5000);
+          }
+        }
+      ];
+      
+      const randomEvent = events[Math.floor(Math.random() * events.length)];
+      randomEvent.effect();
+      
+      setTimeout(() => {
+        eventActive = false;
+      }, 3000);
+    }
+
+    function showEvent(message) {
+      eventNotification.textContent = message;
+      eventNotification.style.opacity = 1;
+      eventNotification.style.top = "20px";
+      
+      setTimeout(() => {
+        eventNotification.style.opacity = 0;
+        eventNotification.style.top = "0px";
+      }, 3000);
+    }
+
+    function endGame(success) {
+      gameActive = false;
+      clearInterval(gameInterval);
+      clearInterval(timerInterval);
+      clearInterval(eventInterval);
+      
+      backgroundSound.pause();
+      
+      if (success) {
+        successSound.play();
+        showEvent("Felicitări! Ai menținut reactorul stabil!");
+        setTimeout(() => {
+          alert(`🎉 Ai reușit! Scor final: ${Math.round(score)}\nDificultate: ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`);
+          document.getElementById("modal").style.display = "flex";
+        }, 1000);
+      } else {
+        meltdownSound.play();
+        meltdownEffect.style.opacity = 1;
+        createParticleExplosion();
+        
+        setTimeout(() => {
+          alert(`☢️ Topire nucleară! Scor final: ${Math.round(score)}\nDificultate: ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`);
+          meltdownEffect.style.opacity = 0;
+          document.getElementById("modal").style.display = "flex";
+        }, 3000);
+      }
+    }
+
+    function createParticleExplosion() {
+      const explosion = document.getElementById("particleExplosion");
+      explosion.innerHTML = '';
+      
+      for (let i = 0; i < 100; i++) {
+        const particle = document.createElement('div');
+        particle.style.position = 'absolute';
+        particle.style.width = `${Math.random() * 10 + 5}px`;
+        particle.style.height = particle.style.width;
+        particle.style.backgroundColor = `hsl(${Math.random() * 30 + 10}, 100%, 50%)`;
+        particle.style.borderRadius = '50%';
+        particle.style.left = `${50 + (Math.random() - 0.5) * 20}%`;
+        particle.style.top = `${50 + (Math.random() - 0.5) * 20}%`;
+        particle.style.opacity = '0.8';
+        
+        const animation = particle.animate([
+          { 
+            transform: 'translate(0, 0) scale(1)',
+            opacity: 0.8 
+          },
+          { 
+            transform: `translate(${(Math.random() - 0.5) * 500}px, ${(Math.random() - 0.5) * 500}px) scale(0)`,
+            opacity: 0 
+          }
+        ], {
+          duration: 2000 + Math.random() * 1000,
+          easing: 'cubic-bezier(0.1, 0.8, 0.2, 1)'
+        });
+        
+        explosion.appendChild(particle);
+        animation.onfinish = () => particle.remove();
+      }
+    }
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.dx = (Math.random() - 0.5) * 0.5;
+        this.dy = (Math.random() - 0.5) * 0.5;
+        this.size = Math.random() * 3 + 1;
+        this.color = `hsl(${Math.random() * 60 + 180}, 100%, 50%)`;
+      }
+
+      update() {
+        this.x += this.dx;
+        this.y += this.dy;
+
+        if (this.x < 0 || this.x > canvas.width) this.dx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.dy *= -1;
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        
+        // Add glow effect
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = this.color;
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.shadowBlur = 0;
+      
+      for (let p of particles) {
+        p.update();
+        p.draw();
+      }
+      
+      requestAnimationFrame(animate);
+    }
+
+    function updateDisplay() {
+      temperature = calculateTemperature(power);
+      pressure = calculatePressure(power, temperature);
+
+      // Update reactor core appearance based on power
+      const coreGlow = power / 100 * 100;
+      reactorCore.style.boxShadow = `0 0 ${coreGlow}px rgba(0, 255, 200, ${0.2 + power/200})`;
+      
+      // Background and particle effects based on reactor status
+      if (power > 95) {
+        document.body.style.background = 'radial-gradient(circle at center, #ff6600, #440000)';
+        ctx.fillStyle = '#ff4444aa';
+        if (gameActive) endGame(false);
+      } else if (power < 5) {
+        document.body.style.background = 'radial-gradient(circle at center, #0077ff, #001133)';
+        ctx.fillStyle = '#00ccffaa';
+        if (gameActive) endGame(false);
+      } else if (power > 80) {
+        document.body.style.background = 'radial-gradient(circle at center, #ff3300, #220000)';
+        ctx.fillStyle = '#ff8800aa';
+      } else if (power < 20) {
+        document.body.style.background = 'radial-gradient(circle at center, #0066ff, #000033)';
+        ctx.fillStyle = '#0099ffaa';
+      } else {
+        document.body.style.background = 'radial-gradient(circle at center, #0f0f0f, #1c1c1c)';
+        ctx.fillStyle = '#00ffff88';
+      }
+
+      // Update particle speed based on power
+      let speedFactor = 0.2 + power / 50;
+      for (let p of particles) {
+        p.dx = (Math.random() - 0.5) * speedFactor;
+        p.dy = (Math.random() - 0.5) * speedFactor;
+        
+        // Change particle color based on temperature
+        const hue = 180 - (temperature / 1000 * 60);
+        p.color = `hsl(${Math.max(0, hue)}, 100%, 50%)`;
+      }
+
+      // Update displays
+      powerDisplay.textContent = Math.round(power);
+      rodDisplay.textContent = rods;
+      tempDisplay.textContent = Math.round(temperature);
+      pressureDisplay.textContent = pressure.toFixed(1);
+
+      // Update power bar
+      document.getElementById("powerLevel").style.width = `${power}%`;
+      
+      // Update status
+      let status = "Stabil";
+      let statusColor = "#00ffaa";
+      
+      if (power < 20) {
+        status = "⚠️ Putere prea mică";
+        statusColor = "#0099ff";
+        if (gameActive) alertSound.play();
+      } else if (power > 80) {
+        status = "🔥 Supraîncălzire!";
+        statusColor = "#ff6600";
+        if (gameActive) alertSound.play();
+      }
+      
+      if (temperature > 700) {
+        status = "🌡️ Temperatură critică!";
+        statusColor = "#ff3300";
+      }
+      
+      if (pressure > 90) {
+        status = "💥 Presiune critică!";
+        statusColor = "#ff0000";
+      }
+      
+      const statusElement = document.getElementById("status");
+      statusElement.textContent = "Status: " + status;
+      statusElement.style.color = statusColor;
+      statusElement.style.textShadow = `0 0 10px ${statusColor}`;
+    }
+
+    // Start the animation and display
+    animate();
+    updateDisplay();
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
