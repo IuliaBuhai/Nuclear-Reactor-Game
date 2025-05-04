@@ -322,7 +322,7 @@
     <h2>⚛️ Bine ai venit în Simulatorul Reactorului Nuclear</h2>
     <p>Scopul tău este să menții reactorul <strong>stabil</strong> timp de <strong>60 de secunde</strong>.</p>
     <p>Folosește butoanele pentru a <strong>retrage</strong> sau <strong>introduce</strong> barele de control și menține temperatura și puterea sub control.</p>
-    <p>Dacă puterea scade sub 5% sau crește peste 95%, vei provoca o <strong>topire nucleară</strong>! 🔥☢️</p>
+    <p>Dacă puterea scade sub 5% sau crește peste 95%, vei provoca o <strong>scurgere nucleară</strong>! 🔥☢️</p>
     <p>Fii atent la fluctuațiile aleatorii și la evenimente neașteptate.</p>
     <p><strong>Nivel de dificultate:</strong></p>
     <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px;">
@@ -621,7 +621,7 @@
         createParticleExplosion();
         
         setTimeout(() => {
-          alert(`☢️ Topire nucleară! Scor final: ${Math.round(score)}\nDificultate: ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`);
+          alert(`☢️ scurgere nucleară! Scor final: ${Math.round(score)}\nDificultate: ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`);
           meltdownEffect.style.opacity = 0;
           document.getElementById("modal").style.display = "flex";
         }, 3000);
